@@ -102,49 +102,49 @@ class ClientSocket:
             raise
         else:
             return c.decode()
-##
-##    """
-##    Reads a line from this socket.
-##
-##    Parameters:
-##    - keepEndl: if True, retains the end-of-line terminator
-##    
-##    Preconditions:
-##    - self.sock is a connected socket
-##
-##    Postconditions:
-##    - If the function successfully reads a line, returns that line as a string
-##    - If there is an exception, closes the socket and propagates the exception
-##
-##    Algorithm:
-##       While True:
-##        Read a character from the socket (throws)
-##        If the character is '', close the socket and throw an exception
-##        If the character is '\n', break
-##        Append the character to a byte array
-##    """
-##    def readline(self, keepEndl=False):
-##        line = ''
-##        while True:
-##            line += read(self)
-##            # TODO: assumes UTF-8 and single-byte characters...or something
-##            # Make this more internationalized...or something
-##            if line.endswith('\n'): break
-##        return line if keepEndl else line.rstrip()
-##
-##    def write(self, data):
-##        self.sock.sendall(data.encode()) # throws
-##
-##    def writeline(self, data):
-##        write(self, data + '\n')
-##
-##    def close(self):
-##        if not self.sock is None: self.sock.close()
+
+    """
+    Reads a line from this socket.
+
+    Parameters:
+    - keepEndl: if True, retains the end-of-line terminator
+    
+    Preconditions:
+    - self.sock is a connected socket
+
+    Postconditions:
+    - If the function successfully reads a line, returns that line as a string
+    - If there is an exception, closes the socket and propagates the exception
+
+    Algorithm:
+       While True:
+        Read a character from the socket (throws)
+        If the character is '', close the socket and throw an exception
+        If the character is '\n', break
+        Append the character to a byte array
+    """
+    def readline(self, keepEndl=False):
+        line = ''
+        while True:
+            # TODO: Is this efficient? It creates lots of garbage
+            line += self.read(self)
+            # TODO: assumes UTF-8 and single-byte characters...or something
+            # Make this more internationalized...or something
+            if line.endswith('\n'): break
+        return line if keepEndl else line.rstrip()
+
+    def write(self, data):
+        self.sock.sendall(data.encode()) # throws
+
+#     def writeline(self, data):
+#         write(self, data + '\n')
+# 
+#     def close(self):
+#         if not self.sock is None: self.sock.close()
     
                     
 HOST = ''            # Server host
 PORT = 50006         # Server port
-PORT_NO_SERVER=50007
 
 MESSAGES = [
     'This is a message',
@@ -154,21 +154,44 @@ MESSAGES = [
 
 def banner(txt, size=3): print('=' * size, txt, '=' * size)
 
-def pf(result, testSummary, exception=None):
-    errMsg = 'None' if exception is None else exception
-    resMsg = 'pass' if result else 'fail'
-    print('test = "%s", result = %s, err = %s'
-          % (testSummary,  resMsg, errMsg))
+def pf(result, testSummary, status):
+    print('test = "%s", result = %s, status = %s'
+          % (testSummary,  
+             'pass' if result else 'fail', 
+             status))
 
-def testConnectNoServer():
-    testSummary = 'connect() to an invalid server'
-    c = ClientSocket(HOST, PORT_NO_SERVER)
+def pf2(result, testSummary):
+    print('fail' if result[0] is False else 'pass', result)
+
+# def connectToServer(host, port, prompt=True):
+#     if prompt:
+#         input('Start a server on [:%d]. Press <Enter> when done\n' % port)
+#     c = ClientSocket(host, port)
+#     try:
+#         c.connect()
+#     except OSError as ose:
+#         return False, ose
+#     else:
+#         return True, c
+    
+def connectToServer(
+        prompt='Start a server on [:%d]. Press <Enter> when done\n' % PORT,
+        host=HOST, port=PORT):
+    if prompt:
+        input(prompt)
+    c = ClientSocket(host, port)
     try:
         c.connect()
     except OSError as ose:
-        pf(True, testSummary, ose)
+        return False, ose
     else:
-        pf(False, testSummary)
+        return True, c
+
+def testConnectNoServer():
+    testSummary = 'connect() to an invalid server'
+    res, ret = connectToServer('')
+    
+    pf(not res, testSummary, ret)
 
 def testConnectToServer():
     testSummary = 'connect() to valid server'
@@ -218,7 +241,7 @@ def testReadChar():
         pf(False, testSummary, ose)
     else:
         pf(False, testSummary, 'No exception')
-            
+        
 ##def testIo():
 ##    c = ClientSocket(HOST, PORT);
 ##    try:            c.connect()
@@ -234,7 +257,7 @@ def testReadChar():
 ##        c.writeline('Echo=>' + msg)
 ##    
 
-if __name__ == '__main__':
 ##    testConnectNoServer()
 ##    testConnectToServer()
-    testReadChar()    
+print('hello')
+testConnectNoServer()    
