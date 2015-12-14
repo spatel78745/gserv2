@@ -6,7 +6,9 @@ import datetime
 class RemoteSocketClosedError(OSError):
     def __init__(self):
         Exception.__init__(self, 'Remote socket closed')
-
+        
+class Ditch(Exception): pass
+        
 """
 Java-style client socket. You can use it to connect to a server socket, or a
 ServerSocket (yet to be written) will pass one of these back when
@@ -28,7 +30,7 @@ class ClientSocket:
         return '%s [%s] [%s]' % (caller, msg, self)
     
     def dlog(self, msg):
-        if __debug__: print(self.log(msg, inspect.stack()[1][3]))
+        if __debug__: print('DBG:', self.log(msg, inspect.stack()[1][3]))
         
     def __init__(self, host='', port=''):
         self.host = host
@@ -77,10 +79,13 @@ class ClientSocket:
     Immediately closes the connection
     """
     def close(self):
-        self.sock.shutdown(socket.SHUT_RDWR)
-        self.sock.close()
-        self.state = ClientSocket.STATE_DISCONNECTED
-        self.dlog('Closed')
+        try:
+            self.sock.shutdown(socket.SHUT_RDWR)
+            self.sock.close()
+            self.state = ClientSocket.STATE_DISCONNECTED
+            self.dlog('Closed')
+        except OSError as ose:
+            self.dlog('Benign error (%s)' % str(ose))
 
     """
     Reads a character from this socket
@@ -127,7 +132,7 @@ class ClientSocket:
         line = ''
         while True:
             # TODO: Is this efficient? It creates lots of garbage
-            line += self.read(self)
+            line += self.read()
             # TODO: assumes UTF-8 and single-byte characters...or something
             # Make this more internationalized...or something
             if line.endswith('\n'): break
@@ -141,8 +146,7 @@ class ClientSocket:
 # 
 #     def close(self):
 #         if not self.sock is None: self.sock.close()
-    
-                    
+                   
 HOST = ''            # Server host
 PORT = 50006         # Server port
 
@@ -154,31 +158,27 @@ MESSAGES = [
 
 def banner(txt, size=3): print('=' * size, txt, '=' * size)
 
-def pf(result, testSummary, status):
-    print('test = "%s", result = %s, status = %s'
+def pf(res, ret, testSummary):
+    print('test="%s", res=%s, ret=%s'
           % (testSummary,  
-             'pass' if result else 'fail', 
-             status))
-
-def pf2(result, testSummary):
-    print('fail' if result[0] is False else 'pass', result)
-
-# def connectToServer(host, port, prompt=True):
-#     if prompt:
-#         input('Start a server on [:%d]. Press <Enter> when done\n' % port)
-#     c = ClientSocket(host, port)
-#     try:
-#         c.connect()
-#     except OSError as ose:
-#         return False, ose
-#     else:
-#         return True, c
+             'pass' if res else 'fail', 
+             ret))
+    return res
     
-def connectToServer(
-        prompt='Start a server on [:%d]. Press <Enter> when done\n' % PORT,
-        host=HOST, port=PORT):
-    if prompt:
-        input(prompt)
+"""
+Connects to a server
+
+Params:
+- host: hostname
+- port: port
+
+Post:
+- If successful, returns (True, socket connection)
+- Otherwise, returns (False, error)
+
+The second element of the tuple is a printable object
+"""
+def connectToServer(host, port):
     c = ClientSocket(host, port)
     try:
         c.connect()
@@ -186,62 +186,128 @@ def connectToServer(
         return False, ose
     else:
         return True, c
-
+    
+def readline(conn, expected, keepEndl):
+    try:
+        line = conn.readline(keepEndl)
+    except OSError as ose:
+        return False,  ose
+    else:
+        def strip(line): return line[:-1] if line.endswith('\n') else line
+        def tr(line): 
+            return strip(line) + '<endl>' if line.endswith('\n') else line
+        
+        got = tr(line)
+        expected = strip(expected) + '<endl>' if keepEndl else expected
+        
+        res = got == expected
+        ret = 'Got (%s), expected (%s)' % (got, expected)
+        
+        return res, ret
+        
 def testConnectNoServer():
     testSummary = 'connect() to an invalid server'
-    res, ret = connectToServer('')
     
-    pf(not res, testSummary, ret)
+    res, ret = connectToServer(HOST, PORT)
+    
+    pf(not res, ret, testSummary)
+    
+    if res: ret.close()
 
 def testConnectToServer():
+# Setup
     testSummary = 'connect() to valid server'
     input('Start a server on [:%d]. Press <Enter> when done\n' % PORT)
-    c = ClientSocket(HOST, PORT)
-    try:
-        c.connect()
-    except OSError as ose:
-        pf(False, testSummary, ose)
-    else:
-        pf(True, testSummary)
-        c.close()
+    
+# Test and report
+    res, ret = connectToServer(HOST, PORT)
+    
+    pf(res, ret, testSummary)
+
+# Teardown
+    if res: ret.close()
 
 def testReadChar():
+# Setup
     testSummary = 'read() a character from the socket'
-    input('Start a server on [:%d]. Press <Enter> when done\n' % PORT)
-    c = ClientSocket(HOST, PORT)
-    try:
-        c.connect()
-    except OSError as ose:
-        pf(False, testSummary, ose)
-        return
-
-    input('Send a Z from the server. Press <Enter> when done')
-    err = None
-    try:
-        res = c.read()
-    except OSError as ose:
-        err = ose
-
-    if err:
-        pf(False, testSummary, err)
-        c.close()
-        return
     
-    if res != 'Z':
-        pf(False, testSummary, 'expected Z, got %s', res)
+    input('Start a server on [:%d]. Press <Enter> when done\n' % PORT)
+    res, ret = connectToServer(HOST, PORT)
+    if not res: 
+        pf(res, ret, testSummary)
+        return
+    else: conn = ret
+     
+# Test and report
+    input('Send a Z from the server. Press <Enter> when done')
+    try:
+        c = conn.read()
+    except OSError as ose:
+        res = False
+        ret = ose
+    else:
+        res = c == 'Z'
+        ret = 'Expected %c, received %c' % ('Z', c)
+        
+    pf(res, ret, testSummary)
 
-    pf(True, testSummary, 'expected Z, got %s', res)
+# Teardown
+    conn.close()    
+        
+def testReadCharServerDies():
+# Setup
+    testSummary = 'Server dies while client is blocked in read()'
+    
+    input('Start a server on [:%d]. Press <Enter> when done\n' % PORT)
+    res, ret = connectToServer(HOST, PORT)
+    if not res: 
+        pf(res, ret, testSummary)
+        return
+    else: conn = ret
 
+# Test and report
     print('Wait 5 seconds, then terminate the server')
     try:
-        res = c.read()
+        conn.read()
     except RemoteSocketClosedError as rsce:
-        pf(True, testSummary, rsce)
+        res = True
+        ret = 'read() threw RemoteSocketClosedError: %s' % rsce
     except OSError as ose:
-        pf(False, testSummary, ose)
+        res = False
+        ret ="read() threw %s, should've thrown RemoteSocketClosed" % ose
     else:
-        pf(False, testSummary, 'No exception')
+        res = False
+        ret ="read() succeeded, should've thrown RemoteSocketClosed"
         
+    pf(res, ret, testSummary)
+    
+# Teardown
+    conn.close()
+    
+def testReadline():
+# Setup
+    testSummary = 'Test readline()'
+    
+# Test and report
+    input('Start a server on [:%d]. Press <Enter> when done\n' % PORT)
+    res, conn = connectToServer(HOST, PORT)
+    if not pf(res, conn, testSummary): return
+       
+    def askForLines(lines, keepEndl):
+        for expected in lines:
+            print("Type '%s'" % expected.rstrip(), "and press enter")
+            res, ret = readline(conn, expected, keepEndl)
+            if not pf(res, ret, testSummary): raise Ditch
+            
+    try:    
+        lines = ['abc', '123', 'def']
+        askForLines(lines, False)
+        
+        lines = [l + '\n' for l in lines]
+        askForLines(lines, True)
+    finally:
+        conn.close()
+    
 ##def testIo():
 ##    c = ClientSocket(HOST, PORT);
 ##    try:            c.connect()
@@ -255,9 +321,13 @@ def testReadChar():
 ##    while msg != 'stop':
 ##        print('received ', msg)
 ##        c.writeline('Echo=>' + msg)
-##    
+##
+def testSuite():    
+#     testConnectNoServer()
+#     testConnectToServer()
+#    testReadChar()
+#    testReadCharServerDies()
+    testReadline()
+        
+testSuite()
 
-##    testConnectNoServer()
-##    testConnectToServer()
-print('hello')
-testConnectNoServer()    
