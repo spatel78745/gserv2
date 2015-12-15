@@ -1,7 +1,6 @@
 import socket
-import sys
 import inspect
-import datetime
+import time
 
 class RemoteSocketClosedError(OSError):
     def __init__(self):
@@ -141,11 +140,9 @@ class ClientSocket:
     def write(self, data):
         self.sock.sendall(data.encode()) # throws
 
-#     def writeline(self, data):
-#         write(self, data + '\n')
-# 
-#     def close(self):
-#         if not self.sock is None: self.sock.close()
+    def writeline(self, data):
+        self.write(data + '\n')
+        
                    
 HOST = ''            # Server host
 PORT = 50006         # Server port
@@ -307,27 +304,43 @@ def testReadline():
         askForLines(lines, True)
     finally:
         conn.close()
+        
+def testWriteline():
+# Setup
+    testSummary = 'Test write'
+    DELAY = 5
     
-##def testIo():
-##    c = ClientSocket(HOST, PORT);
-##    try:            c.connect()
-##    except OSError: pf(False)
-##    else:
-##        pf(True)
-##        c.close()
-##        
-##    
-##    msg = c.readline()
-##    while msg != 'stop':
-##        print('received ', msg)
-##        c.writeline('Echo=>' + msg)
-##
+# Test and report
+    input('Start a server on [:%d]. Press <Enter> when done\n' % PORT)
+    res, conn = connectToServer(HOST, PORT)
+    if not pf(res, conn, testSummary): return
+
+    deepThoughts = ['All composite phenomena are impermanent',
+                    'All contaminated things and events are unsatisfactory',
+                    'All phenomena are empty and self-less']
+    try:
+        for dt in deepThoughts:
+            conn.writeline(dt)
+            time.sleep(DELAY)
+            print(dt)
+    except OSError as ose:
+        ret, res = False, ose
+    else:
+        inp = input('Do you see the above strings on the server side?')
+        res = inp.lower().startswith('y')
+        ret = 'User saw all strings written to the socket'
+    finally:    
+        pf(res, ret, testSummary)
+        conn.close()
+    
+
 def testSuite():    
 #     testConnectNoServer()
 #     testConnectToServer()
-#    testReadChar()
-#    testReadCharServerDies()
-    testReadline()
+#     testReadChar()
+#     testReadCharServerDies()
+#     testReadline()
+    testWriteline()
         
 testSuite()
 
