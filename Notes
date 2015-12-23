@@ -1,0 +1,15 @@
+Problem 1:
+ Currently, there are two ways to make a ClientSocket:
+  1. Using host, port:
+   - cliSock = ClientSocket('host', 1234)
+   
+  2. Using an existing connection:
+   - Isn't this a 'copy constructor'?
+   - cliSock = ClientSocket()
+     cliSock.setSocket(connection)
+
+ Another POV: ClientSocket is a 'decorator' for connections. So maybe the
+ solution is to build ClientSocket on top of Connection. Then ClientSocket
+ inherits from Connection. Let's give this a whirl.
+ 
+ 
