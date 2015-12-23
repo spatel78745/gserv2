@@ -6,8 +6,9 @@ Created on Dec 14, 2015
 
 from clisock import *
 
-HOST = ''            # Server host
-PORT = 50006         # Server port
+HOST = ''     # Server host
+CPORT = 50006 # Port for client-socket tests to connect to
+SPORT = 50007 # Port for external server to connect to
 
 MESSAGES = [
     'This is a message',
@@ -20,10 +21,7 @@ class Ditch(Exception): pass
 def banner(txt, size=3): print('=' * size, txt, '=' * size)
 
 def pf(res, ret, testSummary):
-    print('test="%s", res=%s, ret=%s'
-          % (testSummary,  
-             'pass' if res else 'fail', 
-             ret))
+    print('res=%s, ret=%s' % ('pass' if res else 'fail', ret))
     return res
     
 """
@@ -42,11 +40,11 @@ The second element of the tuple is a printable object
 def connectToServer(host, port):
     c = ClientSocket(host, port)
     try:
-        c.connect()
+        conn = c.connect()
     except OSError as ose:
         return False, ose
     else:
-        return True, c
+        return True, conn
     
 def readline(conn, expected, keepEndl):
     try:
@@ -67,21 +65,27 @@ def readline(conn, expected, keepEndl):
         return res, ret
         
 def testConnectNoServer():
+# Setup
     testSummary = 'connect() to an invalid server'
+    print('BEGIN', testSummary)
     
-    res, ret = connectToServer(HOST, PORT)
+# Test and report
+    res, ret = connectToServer(HOST, CPORT)
     
     pf(not res, ret, testSummary)
     
+# Teardown
     if res: ret.close()
 
 def testConnectToServer():
 # Setup
     testSummary = 'connect() to valid server'
-    input('Start a server on [:%d]. Press <Enter> when done\n' % PORT)
+    print('BEGIN', testSummary)
+
+    input('Start a server on [:%d]. Press <Enter> when done\n' % CPORT)
     
 # Test and report
-    res, ret = connectToServer(HOST, PORT)
+    res, ret = connectToServer(HOST, CPORT)
     
     pf(res, ret, testSummary)
 
@@ -91,9 +95,10 @@ def testConnectToServer():
 def testReadChar():
 # Setup
     testSummary = 'read() a character from the socket'
+    print('BEGIN', testSummary)
     
-    input('Start a server on [:%d]. Press <Enter> when done\n' % PORT)
-    res, ret = connectToServer(HOST, PORT)
+    input('Start a server on [:%d]. Press <Enter> when done\n' % CPORT)
+    res, ret = connectToServer(HOST, CPORT)
     if not res: 
         pf(res, ret, testSummary)
         return
@@ -118,9 +123,10 @@ def testReadChar():
 def testReadCharServerDies():
 # Setup
     testSummary = 'Server dies while client is blocked in read()'
+    print('BEGIN', testSummary)
     
-    input('Start a server on [:%d]. Press <Enter> when done\n' % PORT)
-    res, ret = connectToServer(HOST, PORT)
+    input('Start a server on [:%d]. Press <Enter> when done\n' % CPORT)
+    res, ret = connectToServer(HOST, CPORT)
     if not res: 
         pf(res, ret, testSummary)
         return
@@ -148,10 +154,11 @@ def testReadCharServerDies():
 def testReadline():
 # Setup
     testSummary = 'Test readline()'
+    print('BEGIN', testSummary)
     
 # Test and report
-    input('Start a server on [:%d]. Press <Enter> when done\n' % PORT)
-    res, conn = connectToServer(HOST, PORT)
+    input('Start a server on [:%d]. Press <Enter> when done\n' % CPORT)
+    res, conn = connectToServer(HOST, CPORT)
     if not pf(res, conn, testSummary): return
        
     def askForLines(lines, keepEndl):
@@ -172,11 +179,13 @@ def testReadline():
 def testWriteline():
 # Setup
     testSummary = 'Test write'
+    print('BEGIN', testSummary)
+    
     DELAY = 5
     
 # Test and report
-    input('Start a server on [:%d]. Press <Enter> when done\n' % PORT)
-    res, conn = connectToServer(HOST, PORT)
+    input('Start a server on [:%d]. Press <Enter> when done\n' % CPORT)
+    res, conn = connectToServer(HOST, CPORT)
     if not pf(res, conn, testSummary): return
 
     deepThoughts = ['All composite phenomena are impermanent',
@@ -196,15 +205,23 @@ def testWriteline():
     finally:    
         pf(res, ret, testSummary)
         conn.close()
+        
+def testServerSocket():
+# Setup
+    testSummary = 'Test server socket'
+    print('BEGIN', testSummary)
     
-
+# Test and report
+    ss = ServerSocket()
+    
 def testSuite():    
-#     testConnectNoServer()
-#     testConnectToServer()
-#     testReadChar()
-#     testReadCharServerDies()
-#     testReadline()
+    testConnectNoServer()
+    testConnectToServer()
+    testReadChar()
+    testReadCharServerDies()
+    testReadline()
     testWriteline()
         
 if __name__ == '__main__':
+    print('Running test suite')
     testSuite()

@@ -6,79 +6,29 @@ class RemoteSocketClosedError(OSError):
     def __init__(self):
         Exception.__init__(self, 'Remote socket closed')
         
-"""
-Java-style client socket. You can use it to connect to a server socket, or a
-ServerSocket (yet to be written) will pass one of these back when
-a client socket connects to it and you can use it to pass messages
-"""
-class ClientSocket(util.Util):
+class Connection(util.Util):
     STATE_CONNECTED = 'connected'
     STATE_DISCONNECTED = 'disconnected'
     
-    """
-    Returns a string description of the connection
-    """
     def __str__(self):
-        return '%s:%d %s' % (self.host, self.port, self.state)
-
-    def __init__(self, host='', port=''):
-        self.host = host
-        self.port = port
+        return self.state
+    
+    def __init__(self, conn):
+        self.conn = conn
         self.state = ClientSocket.STATE_DISCONNECTED
-        self.dlog('New instance')
-
-    def setSocket(self, accConn):
-        self.sock = accConn[0]
-        self.host = accConn[1][0]
-        self.port = accConn[1][1]
-        self.state = ClientSocket.STATE_CONNECTED
-
-    """
-    Connects to a server socket
-
-    Pre:
-    - host and port have values
-
-    Post:
-    - If there's an error, raises OSError
-    - If successful, self.sock is connected
-    """
-    def connect(self):
-        for res in socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC,
-                                      socket.SOCK_STREAM):
-            af, socktype, proto, canonname, sa = res
-            try:
-                self.sock = socket.socket(af, socktype, proto)
-            except OSError:
-                self.sock = None
-                continue
-            
-            try:
-                self.sock.connect(sa)
-            except OSError:
-                self.sock.close()
-                self.sock = None
-                continue
-            break
-        
-        if self.sock is None:
-            raise OSError(self.log('Failed to connect'))
-
-        self.state = ClientSocket.STATE_CONNECTED
-        self.dlog('Connected')
-
+                
     """
     Immediately closes the connection
     """
     def close(self):
         try:
-            self.sock.shutdown(socket.SHUT_RDWR)
-            self.sock.close()
+            self.conn.shutdown(socket.SHUT_RDWR)
+            self.conn.close()
             self.state = ClientSocket.STATE_DISCONNECTED
             self.dlog('Closed')
         except OSError as ose:
             self.dlog('Benign error (%s)' % str(ose))
-
+            
     """
     Reads a character from this socket
 
@@ -92,10 +42,10 @@ class ClientSocket(util.Util):
     """
     def read(self):
         try:
-            c = self.sock.recv(1)
+            c = self.conn.recv(1)
             if not c: raise RemoteSocketClosedError
         except OSError:
-            self.sock.close()
+            self.conn.close()
             raise
         else:
             return c.decode()
@@ -131,11 +81,65 @@ class ClientSocket(util.Util):
         return line if keepEndl else line.rstrip()
 
     def write(self, data):
-        self.sock.sendall(data.encode()) # throws
+        self.conn.sendall(data.encode()) # throws
 
     def writeline(self, data):
         self.write(data + '\n')
-                 
+        
+"""
+Java-style client socket. You can use it to connect to a server socket, or a
+ServerSocket (yet to be written) will pass one of these back when
+a client socket connects to it and you can use it to pass messages
+"""
+class ClientSocket(Connection, util.Util):    
+    """
+    Returns a string description of the connection
+    """
+    def __str__(self):
+        return '%s:%d %s' % (self.host, self.port, self.conn)
+
+    def __init__(self, host='', port=''):
+        self.host = host
+        self.port = port
+        self.conn = None
+        
+        self.dlog('new')
+        
+    """
+    Connects to a server socket
+
+    Pre:
+    - host and port have values
+
+    Post:
+    - If there's an error, raises OSError
+    - If successful, self.sock is connected
+    """
+    def connect(self):
+        for res in socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC,
+                                      socket.SOCK_STREAM):
+            af, socktype, proto, canonname, sa = res
+            try:
+                sock = socket.socket(af, socktype, proto)
+            except OSError:
+                sock = None
+                continue
+            
+            try:
+                sock.connect(sa)
+            except OSError:
+                sock.close()
+                sock = None
+                continue
+            break
+        
+        if sock is None:
+            raise OSError(self.log('Failed to connect'))
+        
+        return Connection(sock)
+
+        self.dlog('Connected')
+            
 class ServerSocket(util.Util):
     def __init__(self, port, backlog=5):
         self.port = port
@@ -148,12 +152,5 @@ class ServerSocket(util.Util):
         return 'port=%d connections=%s' % (self.port, str(self.connections))
         
     def accept(self):
-        accConn = self.sockobj.accept()
-        cliSock = ClientSocket()
-        cliSock.setSocket(accConn)
-        self.connections.append(cliSock)
-
-ss = ServerSocket(50007)
-print(ss)
-ss.accept()
-print(ss)
+        accConn = Connection(self.sockobj.accept())
+        self.connections.append(accConn)

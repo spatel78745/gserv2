@@ -12,4 +12,31 @@ Problem 1:
  solution is to build ClientSocket on top of Connection. Then ClientSocket
  inherits from Connection. Let's give this a whirl.
  
- 
+ But what is a connection?
+ - Something that's returned by 'accept' or 'connect'
+ - But whatever it is, it's the same thing
+ - I think this means:
+  - That the connect call belongs in ClientSocket
+  - And only the I/O calls should remain in the Connection class
+  
+So what's it look like in skeletal form?
+  class Connection:
+    def __init__(self, connection)
+    def close()
+    def read(self)
+    def readline(self, keepEndl)
+    def write(self, data)
+    def writeline(self, data)
+    
+And ClientSocket inherits from Connection:
+class ClientSocket(Connection):
+    def __init__(self, host, port)
+        self.conn = None
+    def connect(self):
+        self.conn = Connection(self.sock.connect(...))
+        
+Some nice-to-have TODOs:
+- Use create_connection in connect() using 'with'
+
+There are some issues:
+- 
