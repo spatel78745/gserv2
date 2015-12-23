@@ -1,4 +1,4 @@
-Problem 1:
+Problem 1: Code organization between ClientSocket, ServerSocket
  Currently, there are two ways to make a ClientSocket:
   1. Using host, port:
    - cliSock = ClientSocket('host', 1234)
@@ -37,6 +37,9 @@ class ClientSocket(Connection):
         
 Some nice-to-have TODOs:
 - Use create_connection in connect() using 'with'
+- Do a critical review at some point
 
-There are some issues:
-- 
+Problem 2: Test ServerSocket
+- Use create_connection to connect to the socket. But then what is the point
+  of ClientSocket? Well, convert it and then take a look. Well
+- Divide the ClientSocket tests into Connection and ClientSocket tests

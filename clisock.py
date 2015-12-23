@@ -96,11 +96,10 @@ class ClientSocket(Connection, util.Util):
     Returns a string description of the connection
     """
     def __str__(self):
-        return '%s:%d %s' % (self.host, self.port, self.conn)
+        return '%s:%s' % (self.addr, self.conn)
 
     def __init__(self, host='', port=''):
-        self.host = host
-        self.port = port
+        self.addr = (host, port)
         self.conn = None
         
         self.dlog('new')
@@ -116,28 +115,7 @@ class ClientSocket(Connection, util.Util):
     - If successful, self.sock is connected
     """
     def connect(self):
-        for res in socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC,
-                                      socket.SOCK_STREAM):
-            af, socktype, proto, canonname, sa = res
-            try:
-                sock = socket.socket(af, socktype, proto)
-            except OSError:
-                sock = None
-                continue
-            
-            try:
-                sock.connect(sa)
-            except OSError:
-                sock.close()
-                sock = None
-                continue
-            break
-        
-        if sock is None:
-            raise OSError(self.log('Failed to connect'))
-        
-        return Connection(sock)
-
+        return Connection(socket.create_connection(self.addr))
         self.dlog('Connected')
             
 class ServerSocket(util.Util):

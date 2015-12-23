@@ -181,7 +181,7 @@ def testWriteline():
     testSummary = 'Test write'
     print('BEGIN', testSummary)
     
-    DELAY = 5
+    DELAY = 1
     
 # Test and report
     input('Start a server on [:%d]. Press <Enter> when done\n' % CPORT)
