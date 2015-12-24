@@ -41,5 +41,12 @@ Some nice-to-have TODOs:
 
 Problem 2: Test ServerSocket
 - Use create_connection to connect to the socket. But then what is the point
-  of ClientSocket? Well, convert it and then take a look. Well
-- Divide the ClientSocket tests into Connection and ClientSocket tests
+  of ClientSocket? Well, convert it and then take a look...well, not really
+  necessary.
+- Divide the ClientSocket tests into Connection and ClientSocket tests...well,
+again, not really necessary.
+- Here's the test:
+- Create a server socket and accept a connection
+- Ask the user to connect to the socket
+- Ask the user to send '123' 
+- Send 'abc' and ask the user to verify that she sees it

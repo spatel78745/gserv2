@@ -130,5 +130,8 @@ class ServerSocket(util.Util):
         return 'port=%d connections=%s' % (self.port, str(self.connections))
         
     def accept(self):
-        accConn = Connection(self.sockobj.accept())
-        self.connections.append(accConn)
+        conn, address = self.sockobj.accept()
+        self.connections.append((conn, address))
+        return Connection(conn)
+        
+    def close(self): self.sockobj.close()
