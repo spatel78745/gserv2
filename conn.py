@@ -5,7 +5,7 @@ import util
 class RemoteSocketClosedError(OSError):
     def __init__(self):
         Exception.__init__(self, 'Remote socket closed')
-        
+     
 class Connection(util.Util):
     STATE_CONNECTED = 'connected'
     STATE_DISCONNECTED = 'disconnected'
