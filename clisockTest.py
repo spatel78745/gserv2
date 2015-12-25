@@ -4,7 +4,7 @@ Created on Dec 14, 2015
 @author: spatel78745
 '''
 
-from clisock import *
+from conn import *
 
 HOST = ''     # Server host
 CPORT = 50006 # Port for client-socket tests to connect to

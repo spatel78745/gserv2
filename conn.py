@@ -1,10 +1,13 @@
 import socket
-import time
 import util
 
 class RemoteSocketClosedError(OSError):
     def __init__(self):
         Exception.__init__(self, 'Remote socket closed')
+
+class BadAddressError(Exception):
+    def __init__(self, address):
+        Exception.__init__(self, 'Bad address: ' + address)
      
 class Connection(util.Util):
     STATE_CONNECTED = 'connected'
@@ -98,7 +101,7 @@ class ClientSocket(Connection, util.Util):
     def __str__(self):
         return '%s:%s' % (self.addr, self.conn)
 
-    def __init__(self, host='', port=''):
+    def __init__(self, host=None, port=None):
         self.addr = (host, port)
         self.conn = None
         
@@ -135,3 +138,28 @@ class ServerSocket(util.Util):
         return Connection(conn)
         
     def close(self): self.sockobj.close()
+    
+# In fact, I think we can ditch all the classes and just have this function?
+def getConnection(address):
+    parts = address.split(':')
+    
+    # Assumption: len will be 2 iff there is one colon
+    if len(parts) != 2: raise BadAddressError(address)
+    host, port = parts
+    
+    # This should throw if port isn't an int
+    port = int(port)
+    
+    # Has a host: it's a client socket
+    if host:
+        print('Connecting to', address)
+        cs = ClientSocket(host)
+        return cs.connect()
+    
+    # No host: it's a server socket
+    ss = ServerSocket(port)
+    print('Waiting for connection on', address)
+    c = ss.accept()
+    ss.close()
+    
+    return c

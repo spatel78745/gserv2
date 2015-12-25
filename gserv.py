@@ -4,7 +4,7 @@ Created on Nov 21, 2015
 @author: spatel78745
 '''
 
-import _thread as thread, math, pysock
+import conn, math
 from tkinter import Tk, Canvas
 from tkinter.constants import N,W,E,S
 
@@ -32,15 +32,11 @@ def drawCircle(circle):
     x, y, r = circle[0], circle[1], circle[2]
     canvas.create_oval(x - r, y - r, x + r, y + r) 
 
-''' Converts degrees to radians'''
-def rad(degrees):
-    return math.pi / 180 * degrees
-
 ''' 
 Returns a point (x,y) on circle that's at an angle of theta degrees to the x-axis
 '''
 def pointOnCircle(theta, circle):
-    theta = rad(theta)
+    theta = math.radians(theta)
     x, y, r = circle[0], circle[1], circle[2]
     return (r * math.cos(theta) + x, y - r * math.sin(theta))
 
@@ -192,6 +188,5 @@ if __name__ == '__main__':
 #    testDrawLeg()
 #    print('Hello World')
 #    pysock.server(pysock.echoResponder)
-    thread.start_new_thread(pysock.server, (treePlotResponder,))
+#     thread.start_new_thread(pysock.server, (treePlotResponder,))
     root.mainloop()
-    
