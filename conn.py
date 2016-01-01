@@ -46,9 +46,17 @@ class Connection(util.Util):
     def read(self):
         try:
             c = self.conn.recv(1)
-            if not c: raise RemoteSocketClosedError
+            if not c:
+                """
+                Don't need to close the socket here. The following raise will
+                be caught, and the handler will close the socket before 
+                re-raising it...caught this as a bug when I saw a double
+                close. This is super-tricky stuff.
+                """
+                raise RemoteSocketClosedError
+            
         except OSError:
-            self.conn.close()
+            self.close()
             raise
         else:
             return c.decode()

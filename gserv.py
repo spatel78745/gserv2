@@ -7,6 +7,10 @@ Created on Nov 21, 2015
 import conn, math
 from tkinter import Tk, Canvas
 from tkinter.constants import N,W,E,S
+from _thread import start_new_thread
+from conn import getConnection, RemoteSocketClosedError
+import os
+import sys
 
 #
 # Config
@@ -144,7 +148,6 @@ def testDrawLeg():
     drawRightLeg(1, cx + cx1, 2, cx + cx1 + cx2)
 
 def treePlotResponder(msg):
-    print('GOT: ', msg)
     words = msg.split()
     if words[0] == 'drawNode':
         row = words[1]
@@ -152,7 +155,7 @@ def treePlotResponder(msg):
         key = words[3]
         print('drawNode row: ', row, 'col: ', col, 'key: ', key)
         drawNode(int(row), int(col), key)
-        return 'err\n'
+        return 'ok\n'
     
     if words[0] == 'drawLeftLeg':
         row1 = words[1]
@@ -172,10 +175,35 @@ def treePlotResponder(msg):
         drawRightLeg(int(row1), int(col1), int(row2), int(col2))
         return 'ok\n'
 
-    if words[0] == 'dim':
-        return '%d %d\n' % (num_rows(), num_cols())
-        
+    if words[0] == 'rows':
+        return '%d\n' % num_rows()
+    
+    if words[0] == 'cols':
+        return '%d\n' % num_cols()
+    
     return 'err\n'
+
+"""
+I don't like that I'm processing commands in two places:
+- all the drawing commands in treePlotResponder
+- all the loop-control commands e.g. 'stop' here
+"""
+def commandLoop():
+    try:
+        c = getConnection(':50006')
+        print("Processing...")
+        while True:
+            cmd = c.readline()
+            if cmd.startswith('stop'):
+                c.close() 
+                break
+            resp = treePlotResponder(cmd)
+            c.write(resp)
+    except RemoteSocketClosedError: pass
+    print('done')
+    
+    root.destroy()
+    sys.exit()    
 
 def testTreePlotResponder():
     print(treePlotResponder('drawNode 1 20 H'))
@@ -184,9 +212,38 @@ def testTreePlotResponder():
     print(treePlotResponder('drawLeftLeg 1 20 2 17'))
     print(treePlotResponder('drawRightLeg 1 20 2 23'))
     
-if __name__ == '__main__':
-#    testDrawLeg()
-#    print('Hello World')
-#    pysock.server(pysock.echoResponder)
-#     thread.start_new_thread(pysock.server, (treePlotResponder,))
-    root.mainloop()
+class Interpreter:
+    class CmdDict(dict):
+        @staticmethod
+        def unknownCmd(*args):
+            return 'err'
+        
+        def __missing__(self, key):
+            return self.unknownCmd
+    
+    def __init__(self):
+        self.cmdTable = self.CmdDict({'drawNode': drawNode, 
+                                      'drawLeftLeg': drawLeftLeg,
+                                      'drawRightLeg': drawRightLeg
+                                      })
+        
+    def __call__(self, stmt):
+        tokens = stmt.split()
+        cmd = tokens[0]
+        args = tokens[1:]
+        try:
+            return self.cmdTable[cmd](*args)
+        except TypeError: return 'err'        
+        
+def testInterpreter():
+    interp = Interpreter()    
+    while True:
+        stmt = input('Enter a command:\n')
+        if stmt == 'stop': break
+        print(interp(stmt))
+
+testInterpreter()
+    
+if __name__ == '__main__': pass
+#     start_new_thread(commandLoop, ())
+#     root.mainloop()
