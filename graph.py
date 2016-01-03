@@ -35,15 +35,70 @@ class Graph(dict):
 class DepthFirstSearch:
     def __init__(self, G, s):
         self.G = G
-        self.count = 0
         self.marked = {}
+        self.edgeTo = {}
+        self.s = s
         self.dfs(G, s)
     
     def dfs(self, G, v):
         self.marked[v] = True
         for w in G[v]:
-            if w not in self.marked: self.dfs(G, w)
-
+            if w not in self.marked: 
+                self.edgeTo[w] = v
+                self.dfs(G, w)
+            
+    def hasPath(self, v): return v in self.G
+    
+    def pathTo(self, v):
+        path = []
+        while v != self.s:
+            path.append(v)
+            v = self.edgeTo[v]
+            
+        path.append(self.s)
+        path.reverse()
+        
+        return path
+    
+class BreadthFirstSearch:
+    def __init__(self, G, s):
+        self.G = G
+        self.edgeTo = {}
+        self.s = s
+        
+        self.marked = {}
+        for v in G:
+            self.marked[v] = False
+            
+        self.bfs(G, s)
+    
+    def bfs(self, G, v):
+        self.marked[self.s] = True
+        queue = [self.s]
+        while len(queue) != 0:
+            v = queue.pop(0)
+#             print('chk', v, queue, self.edgeTo, self.marked)
+            for w in G[v]:
+                if not self.marked[w]:
+                    self.edgeTo[w] = v
+                    self.marked[w] = True
+                    queue.append(w)
+#             print('end chk', v, queue, self.edgeTo, self.marked)
+#         print(self.edgeTo)
+            
+    def hasPath(self, v): return v in self.G
+    
+    def pathTo(self, v):
+        path = []
+        while v != self.s:
+            path.append(v)
+            v = self.edgeTo[v]
+            
+        path.append(self.s)
+        path.reverse()
+        
+        return path
+    
 # def testGraph():
 # g = Graph()
 # g.addEdge(0, 1)
@@ -51,18 +106,36 @@ class DepthFirstSearch:
 # g.addEdge(0, 2)
 # print(g, g.V, g.E)
 
-g1 = Graph('/Users/spatel78745/py/tinyG.txt')
-# print(g1, g1.V, g1.E)
-
-# print('Vertices adjacent to 0')
-# for v in g1.adj(0):
-#     print(v)
-
-print('Searching: ', g1)    
-search = DepthFirstSearch(g1, 9)
-print('Vertices connected to', 9, ':', search.marked.keys())    
+def sedgeGraph():
+    g = Graph()
     
-# testGraph()
+    g.addEdge(0, 1)
+    g.addEdge(0, 2)
+    g.addEdge(0, 5)
+    g.addEdge(1, 2)
+    g.addEdge(2, 3)
+    g.addEdge(2, 4)
+    g.addEdge(3, 4)
+    g.addEdge(3, 5)
+    
+    return g
+    
+# g1 = Graph('/Users/spatel78745/py/tinyG.txt')
 
+# print(g1, g1.V, g1.E)
+g1 = sedgeGraph()
+
+# print(g1)
+
+print('BFS Shortest Paths')
+bfs = BreadthFirstSearch(g1, 0)
+for v in g1:
+    print(v, ':', bfs.pathTo(v))
+    
+# print('DFS Shortest Paths')
+# dfs = DepthFirstSearch(g1, 0)
+# for v in g1:
+#     print(v, ':', dfs.pathTo(v))
+    
 if __name__ == '__main__':
     pass
