@@ -65,26 +65,33 @@ class BreadthFirstSearch:
         self.G = G
         self.edgeTo = {}
         self.s = s
+        self.whileCount = 0
         
         self.marked = {}
         for v in G:
             self.marked[v] = False
             
         self.bfs(G, s)
+        
+    def _len(self, queue):
+        self.whileCount += 1
+        print('while:', self.whileCount, queue, len(queue))
+        return len(queue)
     
     def bfs(self, G, v):
         self.marked[self.s] = True
         queue = [self.s]
-        while len(queue) != 0:
+        forCount = 0
+        while self._len(queue) != 0:
             v = queue.pop(0)
 #             print('chk', v, queue, self.edgeTo, self.marked)
             for w in G[v]:
+                forCount += 1
                 if not self.marked[w]:
                     self.edgeTo[w] = v
                     self.marked[w] = True
                     queue.append(w)
-#             print('end chk', v, queue, self.edgeTo, self.marked)
-#         print(self.edgeTo)
+        print('forCount:', forCount)
             
     def hasPath(self, v): return v in self.G
     
@@ -119,18 +126,44 @@ def sedgeGraph():
     g.addEdge(3, 5)
     
     return g
+
+def doBfs(g):
+    bfs = BreadthFirstSearch(g, 0)
+    for v in g:
+        print(v, ':', bfs.pathTo(v))
+        
+def ex1():
+    g = Graph()
+    g.addEdge(0, 1)
+    g.addEdge(0, 2)
+    g.addEdge(1, 3)
+    g.addEdge(2, 3)
+    doBfs(g)
+
+def ex2():
+    g = Graph()
+    g.addEdge(0, 1)
+    g.addEdge(0, 2)
+    g.addEdge(1, 3)
+    g.addEdge(2, 3)
+    g.addEdge(3, 4)
+    doBfs(g)
+
+    
+ex1()
+ex2()
     
 # g1 = Graph('/Users/spatel78745/py/tinyG.txt')
 
 # print(g1, g1.V, g1.E)
-g1 = sedgeGraph()
-
-# print(g1)
-
-print('BFS Shortest Paths')
-bfs = BreadthFirstSearch(g1, 0)
-for v in g1:
-    print(v, ':', bfs.pathTo(v))
+# g1 = sedgeGraph()
+# 
+# # print(g1)
+# 
+# print('BFS Shortest Paths')
+# bfs = BreadthFirstSearch(g1, 0)
+# for v in g1:
+#     print(v, ':', bfs.pathTo(v))
     
 # print('DFS Shortest Paths')
 # dfs = DepthFirstSearch(g1, 0)
