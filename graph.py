@@ -28,6 +28,14 @@ class Digraph(dict):
                 vertices = edge.split()
                 self.addEdge(int(vertices[0]), int(vertices[1]))
                 
+    def reverse(self):
+        rg = Digraph()
+        rg.V = self.V
+        for v in self:
+            for w in self[v]:
+                rg.addEdge(w, v)
+        return rg
+
 
 class Graph(dict):
     def __init__(self, filename=None):
@@ -259,6 +267,10 @@ dg = Digraph('/Users/spatel78745/py/tinyDG.txt')
 print('Adjacency Lists')
 print(dg)
 print('V=%d, E=%d' % (dg.V, dg.E))
+print('Reverse')
+rg = dg.reverse()
+print(rg)
+print('V=%d, E=%d' % (rg.V, rg.E))
 #     print(sg.name)
 #     print(sg.index)
     
