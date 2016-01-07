@@ -4,6 +4,30 @@ Created on Dec 31, 2015
 @author: spatel78745
 '''
 
+class Digraph(dict):
+    def __init__(self, filename=None):
+        self.V = 0
+        self.E = 0
+        if filename is not None:
+            self.filename = filename
+            self.load()
+
+    def addEdge(self, v, w):
+        if v not in self: self[v] = []
+        if w not in self: self[w] = []
+        self[v].insert(0, w)
+        self.E += 1
+        
+    def load(self):
+        with open(self.filename) as gdata:
+            self.V = int(gdata.__next__())
+            E = int(gdata.__next__())
+            print('Reading', self.V, 'vertices and', E, 'edges', 'from',
+                  self.filename)
+            for edge in gdata:
+                vertices = edge.split()
+                self.addEdge(int(vertices[0]), int(vertices[1]))
+                
 
 class Graph(dict):
     def __init__(self, filename=None):
@@ -230,6 +254,11 @@ def testSymGraph():
     print('index: ', sg.index)
     print('G:', sg.G)
     print(sg)
+    
+dg = Digraph('/Users/spatel78745/py/tinyDG.txt')
+print('Adjacency Lists')
+print(dg)
+print('V=%d, E=%d' % (dg.V, dg.E))
 #     print(sg.name)
 #     print(sg.index)
     
