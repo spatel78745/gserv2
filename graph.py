@@ -32,29 +32,83 @@ class Graph(dict):
                 
     def adj(self, v): return self[v]
     
+
+class SymGraph:
+    def __init__(self, filename, delim = " "):
+        self.nextIndex = 0;
+        self.index = {}
+        self.name = {}
+        self.G = Graph()
+        self.filename = filename
+        self.delim = delim
+        
+        with open(self.filename) as gfile:
+            for line in gfile:
+                line.strip();
+                vertices = line.split()
+                
+                s = vertices[0]
+                self.mapVertex(s)
+                for w in vertices[1:]:
+                    self.mapVertex(w)
+                    self.G.addEdge(self.index[s], self.index[w])
+                
+    def mapVertex(self, name):
+        if name in self.index: return
+        self.index[name] = self.nextIndex
+        self.name[self.nextIndex] = name
+        self.nextIndex += 1
+        
+    def toStr(self, adj):
+        return ' '.join([ self.name[v] for v in adj ])
+        
+    def __str__(self):
+        # Converts the adjacency list of vIndex to a string
+        
+        return '\n'.join([ '%s: %s' % (self.name [v], self.toStr(self.G.adj(v))) for v in self.G])
+    
 class DepthFirstSearch:
     def __init__(self, G, s):
         self.G = G
         self.marked = {}
         self.edgeTo = {}
         self.s = s
-        self.dfs(G, s)
-    
-    def dfs(self, G, v):
-        self.marked[v] = True
-        for w in G[v]:
-            if w not in self.marked: 
-                self.edgeTo[w] = v
-                self.dfs(G, w)
+        self.visited = []
+        
+        for v in G:
+            self.marked[v] = False
+            self.edgeTo[v] = None
             
-    def hasPath(self, v): return v in self.G
+        self.dfs(G, s, s)
+    
+    def dfs(self, G, v, u):
+        self.marked[v] = True
+        self.visited.append(v)
+        print('+%d visited: %s' % (v, self.visited))
+        for w in G[v]:
+            if not self.marked[w]: 
+                self.edgeTo[w] = v
+                self.dfs(G, w, v)
+            elif w != u:
+#                 idx = self.visited.index(w)
+#                 cycle = self.visited[idx:] + [0]
+#                 print('cycle:', cycle, u, v, w, idx)
+                print('cycle')
+        self.visited = self.visited[:-1]
+        print('-%d visited: %s' % (v, self.visited))
+            
+    def hasPathTo(self, v): return self.marked[v]
     
     def pathTo(self, v):
+#         print('edgeTo:', self.edgeTo)
+#         print('marked:', self.marked)
+#         print('hasPathTo:', self.hasPathTo(v), self.marked[v])
         path = []
+        if not self.hasPathTo(v): return path
         while v != self.s:
             path.append(v)
             v = self.edgeTo[v]
-            
+             
         path.append(self.s)
         path.reverse()
         
@@ -113,6 +167,12 @@ class BreadthFirstSearch:
 # g.addEdge(0, 2)
 # print(g, g.V, g.E)
 
+def printPaths(search):
+    g = search.G
+    print('all paths in', g)
+    for v in g:
+        print(v, ':', search.pathTo(v))
+
 def sedgeGraph():
     g = Graph()
     
@@ -149,9 +209,33 @@ def ex2():
     g.addEdge(3, 4)
     doBfs(g)
 
+def cycle1():
+    g = Graph()
+    g.addEdge(0, 1)
+    g.addEdge(1, 2)
+    dfs = DepthFirstSearch(g, 0)
+    printPaths(dfs)
     
-ex1()
-ex2()
+def cycle2():
+    g = Graph()
+    g.addEdge(0, 1)
+    g.addEdge(1, 2)
+    g.addEdge(2, 0)
+    dfs = DepthFirstSearch(g, 0)
+    printPaths(dfs)
+    
+def testSymGraph():
+    sg = SymGraph('/Users/spatel78745/py/routes.txt')
+    print('name: ', sg.name)
+    print('index: ', sg.index)
+    print('G:', sg.G)
+    print(sg)
+#     print(sg.name)
+#     print(sg.index)
+    
+# testSymGraph()
+    
+# cycle2()
     
 # g1 = Graph('/Users/spatel78745/py/tinyG.txt')
 
