@@ -35,8 +35,44 @@ class Digraph(dict):
             for w in self[v]:
                 rg.addEdge(w, v)
         return rg
-
-
+    
+    def adj(self, v): return self[v]
+    
+class DirectedCycle:
+    def __init__(self, G):
+        self.G = G
+        self.marked = {}
+        self.edgeTo = {}
+        self.cycle = []
+        self.onStack = {}
+        
+        for v in G:
+            self.marked[v] = False
+            self.edgeTo[v] = None
+            self.onStack[v] = False
+        
+        for v in G:
+            if not self.marked[v]: self.dfs(G, v)
+            
+    def hasCycle(self): return len(self.cycle) > 0
+            
+    def dfs(self, G, v):
+        self.onStack[v] = True
+        self.marked[v] = True
+        for w in G.adj(v):
+            if self.hasCycle(): return
+            elif not self.marked[w]:
+                self.edgeTo[w] = v
+                self.dfs(G, w)
+            elif self.onStack[w]:
+                print('I found a back edge at', w)
+                x = v
+                while x != w:
+                    self.cycle.insert(0, x)
+                    x = self.edgeTo[x]
+                self.cycle.insert(0, w)
+                self.cycle.insert(0, v)
+        
 class Graph(dict):
     def __init__(self, filename=None):
         self.V = 0
@@ -64,7 +100,6 @@ class Graph(dict):
                 
     def adj(self, v): return self[v]
     
-
 class SymGraph:
     def __init__(self, filename, delim = " "):
         self.nextIndex = 0;
@@ -262,38 +297,26 @@ def testSymGraph():
     print('index: ', sg.index)
     print('G:', sg.G)
     print(sg)
-    
-dg = Digraph('/Users/spatel78745/py/tinyDG.txt')
-print('Adjacency Lists')
-print(dg)
-print('V=%d, E=%d' % (dg.V, dg.E))
-print('Reverse')
-rg = dg.reverse()
-print(rg)
-print('V=%d, E=%d' % (rg.V, rg.E))
-#     print(sg.name)
-#     print(sg.index)
-    
-# testSymGraph()
-    
-# cycle2()
-    
-# g1 = Graph('/Users/spatel78745/py/tinyG.txt')
 
-# print(g1, g1.V, g1.E)
-# g1 = sedgeGraph()
-# 
-# # print(g1)
-# 
-# print('BFS Shortest Paths')
-# bfs = BreadthFirstSearch(g1, 0)
-# for v in g1:
-#     print(v, ':', bfs.pathTo(v))
-    
-# print('DFS Shortest Paths')
-# dfs = DepthFirstSearch(g1, 0)
-# for v in g1:
-#     print(v, ':', dfs.pathTo(v))
+def testDigraph():    
+    dg = Digraph('/Users/spatel78745/py/tinyDG.txt')
+    print('Adjacency Lists')
+    print(dg)
+    print('V=%d, E=%d' % (dg.V, dg.E))
+    print('Reverse')
+    rg = dg.reverse()
+    print(rg)
+    print('V=%d, E=%d' % (rg.V, rg.E))
+
+dg = Digraph()
+dg.addEdge(0, 5)
+dg.addEdge(5, 4)
+dg.addEdge(4, 3)
+dg.addEdge(3, 5)
+print(dg)
+dc = DirectedCycle(dg)
+print('has cycle?', dc.hasCycle())
+print('cycle:', dc.cycle)
     
 if __name__ == '__main__':
     pass
