@@ -72,6 +72,9 @@ class DirectedCycle:
                     x = self.edgeTo[x]
                 self.cycle.insert(0, w)
                 self.cycle.insert(0, v)
+                    
+#     def __repr__(self):
+#         return self.__str__()
         
 class Graph(dict):
     def __init__(self, filename=None):
@@ -99,7 +102,7 @@ class Graph(dict):
                 self.addEdge(int(vertices[0]), int(vertices[1]))
                 
     def adj(self, v): return self[v]
-    
+
 class SymGraph:
     def __init__(self, filename, delim = " "):
         self.nextIndex = 0;
@@ -307,16 +310,26 @@ def testDigraph():
     rg = dg.reverse()
     print(rg)
     print('V=%d, E=%d' % (rg.V, rg.E))
+    
+# def mst(g):
+#     nonTree = vertices(g)
+#     tree = [ nonTree.pop() ]
+#     
+#     while nonTree:
+#         minCrossEdge = minWeight(crossEdges(tree, nonTree))
+#         tree.append(newVertex(minCrossEdge))
 
-dg = Digraph()
-dg.addEdge(0, 5)
-dg.addEdge(5, 4)
-dg.addEdge(4, 3)
-dg.addEdge(3, 5)
-print(dg)
-dc = DirectedCycle(dg)
-print('has cycle?', dc.hasCycle())
-print('cycle:', dc.cycle)
+# dg = Digraph()
+# dg.addEdge(0, 5)
+# dg.addEdge(5, 4)
+# dg.addEdge(4, 3)
+# dg.addEdge(3, 5)
+# print(dg)
+# dc = DirectedCycle(dg)
+# print('has cycle?', dc.hasCycle())
+# print('cycle:', dc.cycle)
+
+
     
 if __name__ == '__main__':
     pass
