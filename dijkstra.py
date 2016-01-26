@@ -6,6 +6,19 @@ Created on Jan 25, 2016
 
 ewdFile = '/Users/spatel78745/py/tinyEWD.txt'
 
+class Pq(dict):
+    def contains(self, i): return i in self
+    
+    def change(self, i, val): self[i] = val
+    
+    insert = change
+    
+    def delMin(self):
+        minIdx = min(zip(self.values(), self.keys()))[1]
+        del(self[minIdx])
+        
+        return minIdx
+
 class Edge(tuple):
     @property
     def frm(self): return self[0]
@@ -22,6 +35,7 @@ class EdgeWeightedDigraph(dict):
         if edge.frm not in self: self[edge.frm] = []
         self[edge.frm].append(edge)
         
+    def adj(self, v): return self[v]
         
     @classmethod
     def makeFromList(cls, edges):
@@ -44,5 +58,10 @@ class EdgeWeightedDigraph(dict):
             
             return g
                 
-g = EdgeWeightedDigraph.makeFromFile()
-print(g)
+# g = EdgeWeightedDigraph.makeFromFile()
+# print(g)
+pq=Pq({8: 0.9, 1: 0.8, 3: 0.7, 4: 0.6})
+print(pq)
+print(pq.delMin(), pq)
+print(pq.delMin(), pq)
+print(pq.delMin(), pq)
