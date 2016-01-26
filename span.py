@@ -6,7 +6,7 @@ Created on Jan 15, 2016
 
 from functools import *
 
-class Graph(dict):
+class Digraph(dict):
     def __init__(self, edges=[]):
         for e in edges:
             self.addEdge(e[0], e[1], e[2]) 
@@ -15,13 +15,13 @@ class Graph(dict):
         if v not in self: self[v] = []
         if w not in self: self[w] = []
         self[v].append((w, weight))
-        self[w].append((v, weight))
         
-class Digraph(Graph):
+    def edges(self): return reduce(lambda x, y: x + y, g.values())
+
+        
+class Graph(Digraph):
     def addEdge(self, v, w, weight):
-        if v not in self: self[v] = []
-        if w not in self: self[w] = []
-        self[v].append((v, w, weight))
+        self[w].append((v, weight))
 
 def crossEdges(g, a, b):
     ce = []
@@ -92,6 +92,6 @@ def sp(g, s):
 # g = Graph( [ (0, 2, 7), (0, 1, 3), (2, 4, 5), (2, 3, 1), (3, 4, 8), (3, 5, 4),
 #             (4, 7, 11), (5, 6, 9), (6, 7, 2), (7, 8, 13) ] )
 g = Digraph( [ (0,1,4), (1,2,6), (2,3,5), (2,4,1), (4,3,2) ] )
-sp(g, 0)
+# sp(g, 0)
 
 # print(mst(g))
