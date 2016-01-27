@@ -3,8 +3,11 @@ Created on Jan 25, 2016
 
 @author: spatel78745
 '''
+from pathlib import Path
 
-ewdFile = '/Users/spatel78745/py/tinyEWD.txt'
+EWD_FILE = '/Users/spatel78745/py/tinyEWD.txt'
+POS_INF = 1000000
+
 
 class Pq(dict):
     def contains(self, i): return i in self
@@ -18,6 +21,8 @@ class Pq(dict):
         del(self[minIdx])
         
         return minIdx
+    
+    def empty(self): return len(self) == 0
 
 class Edge(tuple):
     @property
@@ -33,6 +38,7 @@ class EdgeWeightedDigraph(dict):
     def addEdge(self, edge):
         edge = Edge(edge)
         if edge.frm not in self: self[edge.frm] = []
+        if edge.to not in self: self[edge.to] = []
         self[edge.frm].append(edge)
         
     def adj(self, v): return self[v]
@@ -45,7 +51,7 @@ class EdgeWeightedDigraph(dict):
         return g
     
     @classmethod
-    def makeFromFile(cls, filename = ewdFile):
+    def makeFromFile(cls, filename = EWD_FILE):
         with open(filename) as data:
             V = int(data.__next__())
             E = int(data.__next__())
@@ -57,11 +63,47 @@ class EdgeWeightedDigraph(dict):
                 g.addEdge((int(tokens[0]), int(tokens[1]), float(tokens[2])))
             
             return g
+        
+    def vertices(self): return g.keys()
+            
+class DijkstraSP:
+    def __init__(self, G, s):
+        self.edgeTo = {}
+        self.distTo = {}
+        pq = Pq()
+        
+        for v in G.vertices():
+            self.edgeTo[v] = None
+            self.distTo[v] = POS_INF
+            
+        self.distTo[s] = 0.0
+        pq.insert(s, 0.0)
+        
+        while not pq.empty(): self.relax(G, pq, pq.delMin())
+        
+    def relax(self, G, pq, v):
+        for edge in G.adj(v):
+            w = edge.to
+            if self.distTo[w] > self.distTo[v] + edge.weight:
+                self.distTo[w] = self.distTo[v] + edge.weight
+                self.edgeTo[w] = v
+                if pq.contains(w): pq.change(w, edge.weight)
+                else: pq.insert(w, edge.weight)
                 
-# g = EdgeWeightedDigraph.makeFromFile()
-# print(g)
-pq=Pq({8: 0.9, 1: 0.8, 3: 0.7, 4: 0.6})
-print(pq)
-print(pq.delMin(), pq)
-print(pq.delMin(), pq)
-print(pq.delMin(), pq)
+    def pathTo(self, v):
+        path = []
+        if self.distTo[v] == POS_INF: return path
+        
+        while self.edgeTo[v] != None:
+            path.append(v)
+            v = self.edgeTo[v]
+        path.append(v)
+            
+        return list(reversed(path))
+                
+g = EdgeWeightedDigraph.makeFromFile()
+print(g)
+sp = DijkstraSP(g, 0)
+print(sp.edgeTo)
+print(sp.distTo)
+
