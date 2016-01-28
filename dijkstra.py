@@ -114,6 +114,8 @@ class DirectedCycle:
         for v in G.keys():
             if not self.marked[v]: self.dfs(G, v)
             
+    def hasCycle(self): return self.cycle is not None
+            
     def dfs(self, G, v):
         self.onStack[v] = True
         self.marked[v] = True
@@ -133,10 +135,39 @@ class DirectedCycle:
                 self.cycle.append(v)
                 self.cycle.reverse()
         self.onStack[v] = False;
+        
+class Topological:
+    def __init__(self, G):
+        self.reversePost = []
+        self.marked = {}
+        
+        dc = DirectedCycle(G)
+        if dc.hasCycle() is True: return 
+        
+        for v in G.keys():
+            self.marked[v] = False
+            
+        for v in G.keys():
+            if not self.marked[v]: self.dfs(G, v)
+            
+        self.reversePost.reverse()
+            
+    def dfs(self, G, v):
+        self.marked[v] = True
+        for edge in G.adj(v):
+            w = edge.to
+            if self.marked[w] is not True:
+                self.dfs(G, w)
+        self.reversePost.append(v);
                     
-g = EdgeWeightedDigraph.makeFromList([(0,1,0.2), (1,2,0.4), (1,3,0.6), (2,3,0.8), (3,0,0.95)])
+# g = EdgeWeightedDigraph.makeFromList([(0,1,0.2), (1,2,0.4), (1,3,0.6), (2,3,0.8), (3,0,0.95])
+g = EdgeWeightedDigraph.makeFromList([(0,1,0.2), (1,2,0.4), (1,3,0.6), (2,3,0.8)])
 dc = DirectedCycle(g)
 print(dc.cycle)
+print(dc.hasCycle())
+
+t = Topological(g)
+print(t.reversePost)
 # g = EdgeWeightedDigraph.makeFromFile()
 # print(g)
 # sp = DijkstraSP(g, 0)
