@@ -5,6 +5,7 @@ Created on Jan 25, 2016
 '''
 
 EWD_FILE = '/Users/spatel78745/py/tinyEWD.txt'
+EWDAG_FILE = '/Users/spatel78745/py/tinyEWDAG.txt'
 POS_INF = 1000000
 
 class Pq(dict):
@@ -161,14 +162,18 @@ class Topological:
         self.reversePost.append(v);
                     
 # g = EdgeWeightedDigraph.makeFromList([(0,1,0.2), (1,2,0.4), (1,3,0.6), (2,3,0.8), (3,0,0.95])
-g = EdgeWeightedDigraph.makeFromList([(0,1,0.2), (1,2,0.4), (1,3,0.6), (2,3,0.8)])
-dc = DirectedCycle(g)
-print(dc.cycle)
-print(dc.hasCycle())
+# g = EdgeWeightedDigraph.makeFromList([(0,1,0.2), (1,2,0.4), (1,3,0.6), (2,3,0.8)])
+# dc = DirectedCycle(g)
+# print(dc.cycle)
+# print(dc.hasCycle())
+# 
+# t = Topological(g)
+# print(t.reversePost)
 
+g = EdgeWeightedDigraph.makeFromFile(EWDAG_FILE)
 t = Topological(g)
 print(t.reversePost)
-# g = EdgeWeightedDigraph.makeFromFile()
+
 # print(g)
 # sp = DijkstraSP(g, 0)
 # print(sp.edgeTo)
