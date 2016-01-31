@@ -160,6 +160,43 @@ class Topological:
             if self.marked[w] is not True:
                 self.dfs(G, w)
         self.reversePost.append(v);
+        
+class AcyclicSP:
+    def __init__(self, G, s):
+        self.distTo = {}
+        self.edgeTo = {}
+        self.s = s
+        
+        for v in G.vertices():
+            self.edgeTo[v] = None
+            self.distTo[v] = POS_INF
+        self.distTo[s] = 0.0
+            
+        vertices = Topological(G).reversePost
+        for v in vertices:
+            self.relax(G, v)
+            
+    def relax(self, G, v):
+        for edge in G.adj(v):
+            w = edge.to
+            if self.distTo[w] > self.distTo[v] + edge.weight:
+                self.distTo[w] = self.distTo[v] + edge.weight
+                self.edgeTo[w] = edge
+                
+    def hasPathTo(self, v): return self.edgeTo[v] is not None
+    
+    def pathTo(self, v):
+        if not self.hasPathTo(v): return []
+        
+        path = []
+        edge = self.edgeTo[v]
+        path.append(edge)
+        while edge.frm != self.s:
+            edge = self.edgeTo[edge.frm]
+            path.append(edge)
+        path.reverse()
+        
+        return path
                     
 # g = EdgeWeightedDigraph.makeFromList([(0,1,0.2), (1,2,0.4), (1,3,0.6), (2,3,0.8), (3,0,0.95])
 # g = EdgeWeightedDigraph.makeFromList([(0,1,0.2), (1,2,0.4), (1,3,0.6), (2,3,0.8)])
@@ -171,8 +208,9 @@ class Topological:
 # print(t.reversePost)
 
 g = EdgeWeightedDigraph.makeFromFile(EWDAG_FILE)
-t = Topological(g)
-print(t.reversePost)
+asp = AcyclicSP(g, 5)
+# t = Topological(g)
+# print(t.reversePost)
 
 # print(g)
 # sp = DijkstraSP(g, 0)
